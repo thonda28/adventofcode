@@ -20,6 +20,7 @@ func parseInputFile(filename string) (leftList, rightList []int) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := strings.Fields(scanner.Text())
+
 		l, err := strconv.Atoi(line[0])
 		if err != nil {
 			log.Fatal(err)
@@ -36,17 +37,16 @@ func parseInputFile(filename string) (leftList, rightList []int) {
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
-
 	return leftList, rightList
 }
 
 func calcTotalDistance(leftList, rightList []int) (totalDistance int) {
-	sort.Ints(leftList)
-	sort.Ints(rightList)
-
 	if len(leftList) != len(rightList) {
 		log.Fatal("Length of left and right lists must be equal")
 	}
+
+	sort.Ints(leftList)
+	sort.Ints(rightList)
 
 	for i := 0; i < len(leftList); i++ {
 		diff := leftList[i] - rightList[i]
@@ -59,12 +59,13 @@ func calcTotalDistance(leftList, rightList []int) (totalDistance int) {
 }
 
 func calcSimilarityScore(leftList, rightList []int) (similarityScore int) {
-	var rightMap = make(map[int]int)
+	var rightFrequency = make(map[int]int)
 	for _, r := range rightList {
-		rightMap[r]++
+		rightFrequency[r]++
 	}
+
 	for _, l := range leftList {
-		similarityScore += l * rightMap[l]
+		similarityScore += l * rightFrequency[l]
 	}
 	return similarityScore
 }

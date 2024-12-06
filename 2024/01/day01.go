@@ -45,17 +45,24 @@ func calcTotalDistance(leftList, rightList []int) (totalDistance int) {
 		log.Fatal("Length of left and right lists must be equal")
 	}
 
-	sort.Ints(leftList)
-	sort.Ints(rightList)
+	sortedLeftList := copyAndSort(leftList)
+	sortedRightList := copyAndSort(rightList)
 
-	for i := 0; i < len(leftList); i++ {
-		diff := leftList[i] - rightList[i]
+	for i := 0; i < len(sortedLeftList); i++ {
+		diff := sortedLeftList[i] - sortedRightList[i]
 		if diff < 0 {
 			diff = -diff
 		}
 		totalDistance += diff
 	}
 	return totalDistance
+}
+
+func copyAndSort(intList []int) []int {
+	sortedIntList := make([]int, len(intList))
+	copy(sortedIntList, intList)
+	sort.Ints(sortedIntList)
+	return sortedIntList
 }
 
 func calcSimilarityScore(leftList, rightList []int) (similarityScore int) {

@@ -7,6 +7,7 @@ import (
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 )
 
 type MulOperation struct {
@@ -63,6 +64,35 @@ func extractMulOperations(instruction string) (mulOperations []MulOperation) {
 	return mulOperations
 }
 
+func findSearchRanges(instruction string) (searchRanges [][2]int) {
+	active := true
+	start := 0
+
+	position := 0
+	for {
+		if active {
+			index := strings.Index(instruction[position:], "don't()")
+			if index == -1 {
+				searchRanges = append(searchRanges, [2]int{start, len(instruction)})
+				break
+			}
+			end := position + index
+			searchRanges = append(searchRanges, [2]int{start, end})
+			active = false
+			position = end + len("don't")
+		} else {
+			index := strings.Index(instruction[position:], "do()")
+			if index == -1 {
+				break
+			}
+			start = position + index
+			active = true
+			position = start + len("do")
+		}
+	}
+	return searchRanges
+}
+
 func main() {
 	// const filename = "day03.example"
 	const filename = "day03.input"
@@ -78,4 +108,17 @@ func main() {
 	fmt.Printf("sum of the results of all multiplications: %d\n", result)
 
 	// Part 2
+	var enabledMulOperations []MulOperation
+	searchRanges := findSearchRanges(instruction)
+	for _, searchRange := range searchRanges {
+		start, end := searchRange[0], searchRange[1]
+		mulOperations := extractMulOperations(instruction[start:end])
+		enabledMulOperations = append(enabledMulOperations, mulOperations...)
+	}
+
+	enabledResult := 0
+	for _, enabledMulOperation := range enabledMulOperations {
+		enabledResult += enabledMulOperation.multiply()
+	}
+	fmt.Printf("sum of the results of all enabled multiplications: %d\n", enabledResult)
 }

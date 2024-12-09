@@ -5,9 +5,28 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 )
+
+type Stack[T any] struct {
+	data []T
+}
+
+func (s *Stack[T]) Push(item T) {
+	s.data = append(s.data, item)
+}
+
+func (s *Stack[T]) Pop() (T, bool) {
+	if len(s.data) == 0 {
+		var zeroValue T
+		return zeroValue, false
+	}
+	top := s.data[len(s.data)-1]
+	s.data = s.data[:len(s.data)-1]
+	return top, true
+}
 
 func parseInputFile(filename string) (rules [][2]int, orders [][]int) {
 	file, err := os.Open(filename)
@@ -95,6 +114,47 @@ func isCorrectlyOrdered(rules [][2]int, order []int) bool {
 	return true
 }
 
+func sortByRules(rules [][2]int, order []int) (sortedOrder []int) {
+	pagesInOrder := make(map[int]struct{})
+	for _, page := range order {
+		pagesInOrder[page] = struct{}{}
+	}
+
+	beforeToAfters := make(map[int][]int)
+	beforePageCount := make(map[int]int)
+	for _, rule := range rules {
+		before := rule[0]
+		if _, ok := pagesInOrder[before]; !ok {
+			continue
+		}
+		after := rule[1]
+		if _, ok := pagesInOrder[after]; !ok {
+			continue
+		}
+		beforeToAfters[before] = append(beforeToAfters[before], after)
+		beforePageCount[after]++
+	}
+
+	var independentPages Stack[int]
+	for _, page := range order {
+		if beforePageCount[page] == 0 {
+			independentPages.Push(page)
+		}
+	}
+
+	for len(independentPages.data) > 0 {
+		beforePage, _ := independentPages.Pop()
+		for _, afterPage := range beforeToAfters[beforePage] {
+			beforePageCount[afterPage]--
+			if beforePageCount[afterPage] == 0 {
+				independentPages.Push(afterPage)
+			}
+		}
+		sortedOrder = append(sortedOrder, beforePage)
+	}
+	return sortedOrder
+}
+
 func main() {
 	// const filename = "day05.example"
 	const filename = "day05.input"
@@ -102,13 +162,21 @@ func main() {
 	rules, orders := parseInputFile(filename)
 
 	// Part 1
-	result := 0
+	sumOfCorrectOrders := 0
 	for _, order := range orders {
 		if isCorrectlyOrdered(rules, order) {
-			result += order[len(order)/2]
+			sumOfCorrectOrders += order[len(order)/2]
 		}
 	}
-	fmt.Printf("sum of the middle page number from correctly-ordered updates: %d\n", result)
+	fmt.Printf("sum of the middle page number from correctly-ordered updates: %d\n", sumOfCorrectOrders)
 
 	// Part 2
+	sumOfIncorrectOrders := 0
+	for _, order := range orders {
+		sortedOrder := sortByRules(rules, order)
+		if !reflect.DeepEqual(order, sortedOrder) {
+			sumOfIncorrectOrders += sortedOrder[len(sortedOrder)/2]
+		}
+	}
+	fmt.Printf("sum of the middle page number from incorrectly-ordered updates: %d\n", sumOfIncorrectOrders)
 }

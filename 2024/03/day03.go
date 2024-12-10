@@ -76,18 +76,18 @@ func findSearchRanges(instruction string) (searchRanges [][2]int) {
 				searchRanges = append(searchRanges, [2]int{start, len(instruction)})
 				break
 			}
-			end := position + index
+			end := position + index + len("don't()")
 			searchRanges = append(searchRanges, [2]int{start, end})
 			active = false
-			position = end + len("don't")
+			position = end
 		} else {
 			index := strings.Index(instruction[position:], "do()")
 			if index == -1 {
 				break
 			}
-			start = position + index
+			start = position + index + len("do()")
 			active = true
-			position = start + len("do")
+			position = start
 		}
 	}
 	return searchRanges

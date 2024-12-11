@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -46,32 +47,49 @@ func parseInputFile(filename string) (candidates []Candidate) {
 	return candidates
 }
 
-func canSolve(answer int, terms []int) bool {
-	operators := []string{"+", "*"}
+func canSolve(answer int, terms []int, operators []string) bool {
+	if len(terms) == 0 {
+		return false
+	}
 
-	var canSolveHelper func(currentValue, answer int, terms []int, operator string) bool
-	canSolveHelper = func(currentValue, answer int, terms []int, operator string) bool {
+	var canSolveHelper func(currentValue, answer int, terms []int) bool
+	canSolveHelper = func(currentValue, answer int, terms []int) bool {
 		if len(terms) == 0 {
 			return currentValue == answer
 		}
-		switch operator {
-		case "+":
-			currentValue += terms[0]
-		case "*":
-			currentValue *= terms[0]
-		default:
-			log.Fatalf("Invalid operator %s", operator)
-		}
 
-		canSolve := false
 		for _, op := range operators {
-			canSolve = canSolve || canSolveHelper(currentValue, answer, terms[1:], op)
-		}
+			nextValue, err := calculate(currentValue, terms[0], op)
+			if err != nil {
+				log.Fatal(err)
+			}
 
-		return canSolve
+			if canSolveHelper(nextValue, answer, terms[1:]) {
+				return true
+			}
+		}
+		return false
 	}
 
-	return canSolveHelper(terms[0], answer, terms[1:], "+") || canSolveHelper(terms[0], answer, terms[1:], "*")
+	return canSolveHelper(terms[0], answer, terms[1:])
+}
+
+func calculate(a, b int, op string) (int, error) {
+	switch op {
+	case "+":
+		return a + b, nil
+	case "*":
+		return a * b, nil
+	case "||":
+		concatnated := strconv.Itoa(a) + strconv.Itoa(b)
+		concatnatedInt, err := strconv.Atoi(concatnated)
+		if err != nil {
+			return 0, err
+		}
+		return concatnatedInt, nil
+	default:
+		return 0, errors.New("invalid operator")
+	}
 }
 
 func main() {
@@ -81,13 +99,22 @@ func main() {
 	candidates := parseInputFile(filename)
 
 	// Part 1
+	twoAvailableOperators := []string{"+", "*"}
 	totalCalibrationResult := 0
 	for _, candidate := range candidates {
-		if canSolve(candidate.Answer, candidate.Terms) {
+		if canSolve(candidate.Answer, candidate.Terms, twoAvailableOperators) {
 			totalCalibrationResult += candidate.Answer
 		}
 	}
 	fmt.Printf("totalCalibrationResult: %d\n", totalCalibrationResult)
 
 	// Part 2
+	threeAvailableOperators := []string{"+", "*", "||"}
+	newTotalCalibrationResult := 0
+	for _, candidate := range candidates {
+		if canSolve(candidate.Answer, candidate.Terms, threeAvailableOperators) {
+			newTotalCalibrationResult += candidate.Answer
+		}
+	}
+	fmt.Printf("newTotalCalibrationResult: %d\n", newTotalCalibrationResult)
 }

@@ -68,6 +68,10 @@ func findStart(field []string) (startPosition Position) {
 			found = true
 		}
 	}
+
+	if !found {
+		log.Fatal("Start position does not exist.")
+	}
 	return startPosition
 }
 

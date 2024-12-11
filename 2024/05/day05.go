@@ -160,7 +160,7 @@ func sortByRules(rules [][2]int, order []int) (sortedOrder []int) {
 //    1-1. The graph is a Directed Acyclic Graph (DAG)
 //    1-2. At each step, there is only one vertex with an in-degree of 0
 // 2. The length of the order is always odd
-// 3. All elements in the order are coprime
+// 3. All elements in the order are unique
 
 func main() {
 	// const filename = "day05.example"

@@ -155,6 +155,13 @@ func sortByRules(rules [][2]int, order []int) (sortedOrder []int) {
 	return sortedOrder
 }
 
+// Constraints:
+// 1. The result of the Topological Sort is uniquely determined
+//    1-1. The graph is a Directed Acyclic Graph (DAG)
+//    1-2. At each step, there is only one vertex with an in-degree of 0
+// 2. The length of the order is always odd
+// 3. All elements in the order are coprime
+
 func main() {
 	// const filename = "day05.example"
 	const filename = "day05.input"

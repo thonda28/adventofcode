@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	StartMarker = '^'
-	Obstruction = '#'
+	StartMarker   = "^"
+	Obstruction   = "#"
+	NoObstruction = "."
 )
 
 type Position struct {
@@ -57,7 +58,7 @@ func findStart(field []string) (startPosition Position) {
 	found := false
 	for row := 0; row < numRows; row++ {
 		for col := 0; col < numCols; col++ {
-			if field[row][col] != StartMarker {
+			if string(field[row][col]) != StartMarker {
 				continue
 			}
 			if found {
@@ -99,7 +100,7 @@ func patrol(
 		if !isInside(nextPosition) {
 			break
 		}
-		if field[nextPosition.Row][nextPosition.Col] == Obstruction {
+		if string(field[nextPosition.Row][nextPosition.Col]) == Obstruction {
 			directionIndex = (directionIndex + 1) % len(directions)
 			continue
 		}
@@ -125,6 +126,34 @@ func isInfinitePatrol(
 	return false
 }
 
+func countStuckableObstruction(field []string, startPosition Position) (stuckableObstructionCount int) {
+	numRows := len(field)
+	numCols := len(field[0])
+
+	for row := 0; row < numRows; row++ {
+		for col := 0; col < numCols; col++ {
+			if row == startPosition.Row && col == startPosition.Col {
+				continue
+			}
+			if string(field[row][col]) == Obstruction {
+				continue
+			}
+
+			// place an obstruction temporarily
+			field[row] = field[row][:col] + Obstruction + field[row][col+1:]
+
+			if _, canExit := patrol(field, startPosition); !canExit {
+				stuckableObstructionCount++
+			}
+
+			// remove the temporarily placed obstruction
+			field[row] = field[row][:col] + NoObstruction + field[row][col+1:]
+		}
+	}
+
+	return stuckableObstructionCount
+}
+
 func main() {
 	// const filename = "day06.example"
 	const filename = "day06.input"
@@ -140,4 +169,6 @@ func main() {
 	fmt.Printf("number of patrolled positions: %d\n", len(positionToDirections))
 
 	// Part 2
+	stuckableObstructionCount := countStuckableObstruction(field, startPosition)
+	fmt.Printf("number of positions where placing an obstruction can make the guard stuck: %d\n", stuckableObstructionCount)
 }

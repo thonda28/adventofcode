@@ -19,6 +19,11 @@ type Position struct {
 
 type Direction int
 
+type PositionDirection struct {
+	pos Position
+	dir Direction
+}
+
 const (
 	Up Direction = iota
 	Right
@@ -78,7 +83,7 @@ func findStart(field []string) (startPosition Position) {
 func patrol(
 	field []string,
 	startPosition Position,
-) (positionToDirections map[Position][]Direction, canExit bool) {
+) (visited map[Position]struct{}, canExit bool) {
 	numRows := len(field)
 	numCols := len(field[0])
 
@@ -90,14 +95,15 @@ func patrol(
 	directionIndex := 0
 
 	position := startPosition
-	positionToDirections = make(map[Position][]Direction)
+	visited = make(map[Position]struct{})
+	positionDirectionHistory := make(map[PositionDirection]struct{})
 	for {
 		direction := directions[directionIndex]
-		if isInfinitePatrol(position, direction, positionToDirections) {
+		if isInfinitePatrol(position, direction, positionDirectionHistory) {
 			return nil, false
 		}
-
-		positionToDirections[position] = append(positionToDirections[position], direction)
+		visited[position] = struct{}{}
+		positionDirectionHistory[PositionDirection{position, direction}] = struct{}{}
 
 		move := moves[direction]
 		nextPosition := Position{position.Row + move[0], position.Col + move[1]}
@@ -111,23 +117,18 @@ func patrol(
 		position = nextPosition
 	}
 
-	return positionToDirections, true
+	return visited, true
 }
 
 func isInfinitePatrol(
 	currentPosition Position,
 	currentDirection Direction,
-	positionToDirections map[Position][]Direction,
+	positionDirectionHistory map[PositionDirection]struct{},
 ) bool {
-	if directions, ok := positionToDirections[currentPosition]; ok {
-		for _, d := range directions {
-			// same position and direction encountered again
-			if d == currentDirection {
-				return true
-			}
-		}
-	}
-	return false
+	posDir := PositionDirection{currentPosition, currentDirection}
+	// same position and direction encountered again
+	_, ok := positionDirectionHistory[posDir]
+	return ok
 }
 
 func countStuckableObstruction(field []string, startPosition Position) (stuckableObstructionCount int) {
@@ -166,11 +167,11 @@ func main() {
 
 	// Part 1
 	startPosition := findStart(field)
-	positionToDirections, canExit := patrol(field, startPosition)
+	visitedPositions, canExit := patrol(field, startPosition)
 	if !canExit {
 		log.Fatal("Cannot exit this field.")
 	}
-	fmt.Printf("number of patrolled positions: %d\n", len(positionToDirections))
+	fmt.Printf("number of patrolled positions: %d\n", len(visitedPositions))
 
 	// Part 2
 	stuckableObstructionCount := countStuckableObstruction(field, startPosition)

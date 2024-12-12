@@ -58,6 +58,7 @@ func getAntennaPositions(field []string) (antennaPositions map[byte][]Position) 
 func getAntinodes(
 	field []string,
 	positions []Position,
+	isExtendedMode bool,
 ) (antinodePositions map[Position]struct{}) {
 	numRows := len(field)
 	numCols := len(field[0])
@@ -75,16 +76,38 @@ func getAntinodes(
 			deltaRow := posA.Row - posB.Row
 			deltaCol := posA.Col - posB.Col
 
-			// antinode candidate on A’s side
-			candidateA := Position{posA.Row + deltaRow, posA.Col + deltaCol}
-			if isInside(candidateA.Row, candidateA.Col) {
-				antinodePositions[candidateA] = struct{}{}
-			}
+			if isExtendedMode {
+				// Part 2
 
-			// antinode candidate on B’s side
-			candidateB := Position{posB.Row - deltaRow, posB.Col - deltaCol}
-			if isInside(candidateB.Row, candidateB.Col) {
-				antinodePositions[candidateB] = struct{}{}
+				// antinode candidate on A’s side
+				candidateA := posA
+				for isInside(candidateA.Row, candidateA.Col) {
+					antinodePositions[candidateA] = struct{}{}
+					candidateA.Row += deltaRow
+					candidateA.Col += deltaCol
+				}
+
+				// antinode candidate on B’s side
+				candidateB := posB
+				for isInside(candidateB.Row, candidateB.Col) {
+					antinodePositions[candidateB] = struct{}{}
+					candidateB.Row -= deltaRow
+					candidateB.Col -= deltaCol
+				}
+			} else {
+				// Part 1
+
+				// antinode candidate on A’s side
+				candidateA := Position{posA.Row + deltaRow, posA.Col + deltaCol}
+				if isInside(candidateA.Row, candidateA.Col) {
+					antinodePositions[candidateA] = struct{}{}
+				}
+
+				// antinode candidate on B’s side
+				candidateB := Position{posB.Row - deltaRow, posB.Col - deltaCol}
+				if isInside(candidateB.Row, candidateB.Col) {
+					antinodePositions[candidateB] = struct{}{}
+				}
 			}
 		}
 	}
@@ -94,10 +117,11 @@ func getAntinodes(
 func getAllAntinodes(
 	field []string,
 	antennaPositions map[byte][]Position,
+	isExtendedMode bool,
 ) (allAntinodePositions map[Position]struct{}) {
 	allAntinodePositions = make(map[Position]struct{})
 	for _, positions := range antennaPositions {
-		allAntinodePositions = union(allAntinodePositions, getAntinodes(field, positions))
+		allAntinodePositions = union(allAntinodePositions, getAntinodes(field, positions, isExtendedMode))
 	}
 	return allAntinodePositions
 }
@@ -124,8 +148,10 @@ func main() {
 
 	// Part 1
 	antennaPositions := getAntennaPositions(field)
-	allAntinodes := getAllAntinodes(field, antennaPositions)
-	fmt.Printf("number of antinode: %d\n", len(allAntinodes))
+	allAntinodes := getAllAntinodes(field, antennaPositions, false)
+	fmt.Printf("the number of antinodes: %d\n", len(allAntinodes))
 
 	// Part 2
+	allExtendedAntinodes := getAllAntinodes(field, antennaPositions, true)
+	fmt.Printf("the number of extended antinodes: %d\n", len(allExtendedAntinodes))
 }
